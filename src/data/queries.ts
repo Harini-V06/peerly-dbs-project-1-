@@ -77,35 +77,41 @@ export type SessionHistoryRow = {
 
 /** vw_session_history — for a given student */
 export function getSessionHistory(studentId: number): SessionHistoryRow[] {
-  return sessions
-    .map((sess) => {
-      const m = matches.find((x) => x.match_id === sess.match_id)!;
-      const offer = teachingOffers.find((x) => x.offer_id === m.offer_id)!;
-      const req = learningRequests.find((x) => x.request_id === m.request_id)!;
-      const tutor = students.find((x) => x.student_id === offer.student_id)!;
-      const learner = students.find((x) => x.student_id === req.student_id)!;
-      const subj = subjects.find((x) => x.subject_id === offer.subject_id)!;
+  const rows: SessionHistoryRow[] = [];
+  for (const sess of sessions) {
+    const m = matches.find((x) => x.match_id === sess.match_id);
+    if (!m) continue;
+    const offer = teachingOffers.find((x) => x.offer_id === m.offer_id);
+    if (!offer) continue;
+    const tutor = students.find((x) => x.student_id === offer.student_id);
+    if (!tutor) continue;
+    // learner: from request if it exists, else any other session participant
+    const req = learningRequests.find((x) => x.request_id === m.request_id);
+    const learner =
+      (req && students.find((x) => x.student_id === req.student_id)) ||
+      students.find((x) => x.student_id !== tutor.student_id)!;
+    const subj = subjects.find((x) => x.subject_id === offer.subject_id);
+    if (!subj) continue;
 
-      if (tutor.student_id !== studentId && learner.student_id !== studentId) return null;
+    if (tutor.student_id !== studentId && learner.student_id !== studentId) continue;
 
-      const given = ratings.find((r) => r.session_id === sess.session_id && r.rater_id === studentId);
-      const received = ratings.find((r) => r.session_id === sess.session_id && r.ratee_id === studentId);
+    const given = ratings.find((r) => r.session_id === sess.session_id && r.rater_id === studentId);
+    const received = ratings.find((r) => r.session_id === sess.session_id && r.ratee_id === studentId);
 
-      return {
-        session_id: sess.session_id,
-        datetime: sess.datetime,
-        duration: sess.duration,
-        mode: sess.mode,
-        status: sess.status,
-        subject_name: subj.name,
-        tutor,
-        learner,
-        given_rating: given?.score,
-        received_rating: received?.score,
-      } satisfies SessionHistoryRow;
-    })
-    .filter((x): x is SessionHistoryRow => x !== null)
-    .sort((a, b) => b.datetime.localeCompare(a.datetime));
+    rows.push({
+      session_id: sess.session_id,
+      datetime: sess.datetime,
+      duration: sess.duration,
+      mode: sess.mode,
+      status: sess.status,
+      subject_name: subj.name,
+      tutor,
+      learner,
+      given_rating: given?.score,
+      received_rating: received?.score,
+    });
+  }
+  return rows.sort((a, b) => b.datetime.localeCompare(a.datetime));
 }
 
 export type StudentReputation = {
