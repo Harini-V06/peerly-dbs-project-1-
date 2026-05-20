@@ -11,6 +11,7 @@ import {
 import appCss from "../styles.css?url";
 import { Nav } from "@/components/Nav";
 import { Marquee } from "@/components/Marquee";
+import { getSessionFn } from "@/lib/auth";
 
 function NotFoundComponent() {
   return (
