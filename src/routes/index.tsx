@@ -1,6 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { CURRENT_USER_ID } from "@/data/mockDb";
-import { getActiveTutors, getMatchFeed, getLearningSubjects } from "@/data/queries";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { getActiveTutorsFn, getMatchFeedFn, getLearningSubjectsFn } from "@/data/serverQueries";
 import { TutorCard } from "@/components/TutorCard";
 import { PillLink } from "@/components/PillButton";
 import { SubjectTag } from "@/components/SubjectTag";
@@ -12,13 +11,21 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Match with peers who can teach what you need to learn." },
     ],
   }),
+  beforeLoad: ({ context }) => {
+    if (!(context as any).currentUserId) throw redirect({ to: '/login' })
+  },
+  loader: async ({ context }) => {
+    const studentId = (context as any).currentUserId as number
+    const feed = await getMatchFeedFn({ data: { studentId } })
+    const all = await getActiveTutorsFn()
+    const myNeeds = await getLearningSubjectsFn({ data: { studentId } })
+    return { feed, all, myNeeds }
+  },
   component: Home,
 });
 
 function Home() {
-  const feed = getMatchFeed(CURRENT_USER_ID);
-  const all = getActiveTutors();
-  const myNeeds = getLearningSubjects(CURRENT_USER_ID);
+  const { feed, all, myNeeds } = Route.useLoaderData()
   const showcase = feed.length > 0 ? feed : all.slice(0, 4);
 
   return (

@@ -1,39 +1,48 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter, redirect } from "@tanstack/react-router";
 import { useState } from "react";
-import { CURRENT_USER_ID } from "@/data/mockDb";
-import { getSessionHistory } from "@/data/queries";
-import { completeSession, leaveRating } from "@/data/mutations";
+import { getSessionHistoryFn, completeSessionFn, leaveRatingFn, type SessionHistoryRow } from "@/data/serverQueries";
 import { StarRating } from "@/components/StarRating";
 import { PillButton } from "@/components/PillButton";
 import { SubjectTag } from "@/components/SubjectTag";
 
 export const Route = createFileRoute("/sessions")({
   head: () => ({ meta: [{ title: "My sessions — peerly." }] }),
+  beforeLoad: ({ context }) => {
+    if (!(context as any).currentUserId) throw redirect({ to: '/login' })
+  },
+  loader: async ({ context }) => {
+    const studentId = (context as any).currentUserId as number
+    const rows = await getSessionHistoryFn({ data: { studentId } })
+    return { rows, studentId }
+  },
   component: SessionsPage,
 });
 
 function SessionsPage() {
   const router = useRouter();
-  const rows = getSessionHistory(CURRENT_USER_ID);
+  const { rows, studentId } = Route.useLoaderData()
+  const CURRENT_USER_ID = studentId
   const [ratingFor, setRatingFor] = useState<number | null>(null);
   const [score, setScore] = useState(5);
   const [comment, setComment] = useState("");
 
-  function submitRating(row: ReturnType<typeof getSessionHistory>[number]) {
+  async function submitRating(row: SessionHistoryRow) {
     const ratee = row.tutor.student_id === CURRENT_USER_ID ? row.learner : row.tutor;
-    leaveRating({
-      session_id: row.session_id,
-      rater_id: CURRENT_USER_ID,
-      ratee_id: ratee.student_id,
-      score,
-      comment: comment || "(no comment)",
+    await leaveRatingFn({
+      data: {
+        session_id: row.session_id,
+        rater_id: CURRENT_USER_ID,
+        ratee_id: ratee.student_id,
+        score,
+        comment: comment || "(no comment)",
+      }
     });
     setRatingFor(null); setScore(5); setComment("");
     router.invalidate();
   }
 
-  function markComplete(sessionId: number) {
-    completeSession(sessionId);
+  async function markComplete(sessionId: number) {
+    await completeSessionFn({ data: { sessionId } });
     router.invalidate();
   }
 

@@ -1,5 +1,6 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouteContext, useNavigate } from "@tanstack/react-router";
 import { PillLink } from "./PillButton";
+import { logoutFn } from "@/lib/auth";
 
 const links = [
   { to: "/", label: "Home" },
@@ -9,6 +10,14 @@ const links = [
 ] as const;
 
 export function Nav() {
+  const { currentUserId } = useRouteContext({ from: '__root__' }) as { currentUserId: number | null }
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await logoutFn()
+    await navigate({ to: '/login' })
+  }
+
   return (
     <header className="sticky top-3 z-30 mx-3 mt-3 rounded-full border border-foreground/20 bg-background/85 px-4 py-2 backdrop-blur md:mx-6">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
@@ -29,9 +38,23 @@ export function Nav() {
             </Link>
           ))}
         </nav>
-        <PillLink to="/tutors" className="!px-4 !py-1.5 !text-xs">
-          Find a tutor
-        </PillLink>
+        <div className="flex items-center gap-2">
+          {currentUserId ? (
+            <button
+              onClick={handleLogout}
+              className="rounded-full border border-foreground/30 bg-background px-4 py-1.5 text-xs hover:bg-secondary transition-colors"
+            >
+              Sign out
+            </button>
+          ) : (
+            <PillLink to="/login" className="!px-4 !py-1.5 !text-xs">
+              Sign in
+            </PillLink>
+          )}
+          <PillLink to="/tutors" className="!px-4 !py-1.5 !text-xs">
+            Find a tutor
+          </PillLink>
+        </div>
       </div>
     </header>
   );

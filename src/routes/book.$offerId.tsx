@@ -1,19 +1,27 @@
-import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, notFound, useNavigate, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  getOfferById, getStudentById, getSubjectById, getAvailabilityFor,
-} from "@/data/queries";
-import { bookSession } from "@/data/mutations";
-import { CURRENT_USER_ID } from "@/data/mockDb";
+  getOfferByIdFn, getStudentByIdFn, getSubjectByIdFn, getAvailabilityForFn, bookSessionFn,
+} from "@/data/serverQueries";
 import { PillButton, PillLink } from "@/components/PillButton";
 import { SubjectTag } from "@/components/SubjectTag";
 
 export const Route = createFileRoute("/book/$offerId")({
   head: () => ({ meta: [{ title: "Book a session — peerly." }] }),
-  loader: ({ params }) => {
-    const offer = getOfferById(Number(params.offerId));
+  beforeLoad: ({ context }) => {
+    if (!(context as any).currentUserId) throw redirect({ to: '/login' })
+  },
+  loader: async ({ params, context }) => {
+    const offerId = Number(params.offerId);
+    const offer = await getOfferByIdFn({ data: { offerId } });
     if (!offer) throw notFound();
-    return { offerId: offer.offer_id };
+    const [tutor, subject, slots] = await Promise.all([
+      getStudentByIdFn({ data: { id: offer.student_id } }),
+      getSubjectByIdFn({ data: { subjectId: offer.subject_id } }),
+      getAvailabilityForFn({ data: { studentId: offer.student_id } }),
+    ]);
+    const currentUserId = (context as any).currentUserId as number
+    return { offer, tutor, subject, slots, currentUserId };
   },
   component: BookPage,
 });
@@ -28,11 +36,7 @@ function nextDateForDay(day: string): string {
 }
 
 function BookPage() {
-  const { offerId } = Route.useLoaderData();
-  const offer = getOfferById(offerId)!;
-  const tutor = getStudentById(offer.student_id)!;
-  const subject = getSubjectById(offer.subject_id)!;
-  const slots = getAvailabilityFor(tutor.student_id);
+  const { offer, tutor, subject, slots, currentUserId } = Route.useLoaderData();
   const navigate = useNavigate();
 
   const [slotIdx, setSlotIdx] = useState(0);
@@ -40,18 +44,20 @@ function BookPage() {
   const [duration, setDuration] = useState(60);
   const [confirmed, setConfirmed] = useState<null | { id: number; when: string }>(null);
 
-  const isSelf = tutor.student_id === CURRENT_USER_ID;
+  const isSelf = tutor?.student_id === currentUserId;
 
-  function confirm() {
-    if (slots.length === 0) return;
+  async function confirm() {
+    if (!slots || slots.length === 0) return;
     const slot = slots[slotIdx];
     const dt = `${nextDateForDay(slot.day_of_week)}T${slot.start_time}:00`;
-    const s = bookSession({
-      offer_id: offer.offer_id,
-      learner_id: CURRENT_USER_ID,
-      datetime: dt,
-      duration,
-      mode,
+    const s = await bookSessionFn({
+      data: {
+        offer_id: offer.offer_id,
+        learner_id: currentUserId,
+        datetime: dt,
+        duration,
+        mode,
+      }
     });
     setConfirmed({ id: s.session_id, when: dt });
   }
@@ -63,7 +69,7 @@ function BookPage() {
           <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-background border border-foreground/20 text-2xl">✓</div>
           <h1 className="font-display text-4xl">Session booked!</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Session #{confirmed.id} with {tutor.name} for {subject.name} on{" "}
+            Session #{confirmed.id} with {tutor?.name} for {subject?.name} on{" "}
             {new Date(confirmed.when).toLocaleString()}.
           </p>
           <div className="mt-6 flex justify-center gap-3">
@@ -83,13 +89,13 @@ function BookPage() {
 
         <div className="mt-6 rounded-3xl bg-primary/40 border border-foreground/15 p-6 shadow-[3px_3px_0_0_var(--foreground)]">
           <p className="text-sm">You're booking</p>
-          <p className="font-display text-3xl">{subject.name}</p>
+          <p className="font-display text-3xl">{subject?.name}</p>
           <p className="text-sm text-muted-foreground">
-            with <strong>{tutor.name}</strong> ({tutor.department} · Year {tutor.year})
+            with <strong>{tutor?.name}</strong> ({tutor?.department} · Year {tutor?.year})
           </p>
           <div className="mt-3 flex flex-wrap gap-1.5">
             <SubjectTag tone="mint">{offer.rate}</SubjectTag>
-            <SubjectTag tone="blue">{subject.difficulty_level}</SubjectTag>
+            <SubjectTag tone="blue">{subject?.difficulty_level}</SubjectTag>
             <SubjectTag tone="peach">max {offer.max_students} students</SubjectTag>
           </div>
         </div>
@@ -98,7 +104,7 @@ function BookPage() {
           <p className="mt-6 rounded-2xl bg-background border border-foreground/15 p-5 text-sm text-muted-foreground">
             That's your own offer — you can't book yourself. Try another tutor.
           </p>
-        ) : slots.length === 0 ? (
+        ) : !slots || slots.length === 0 ? (
           <p className="mt-6 rounded-2xl bg-background border border-foreground/15 p-5 text-sm text-muted-foreground">
             This tutor hasn't set availability yet.
           </p>
@@ -107,7 +113,7 @@ function BookPage() {
             <div>
               <p className="mb-2 text-sm font-medium">Pick a time slot</p>
               <div className="grid gap-2 sm:grid-cols-2">
-                {slots.map((s, i) => (
+                {slots.map((s: any, i: number) => (
                   <button
                     key={s.avail_id}
                     onClick={() => setSlotIdx(i)}
