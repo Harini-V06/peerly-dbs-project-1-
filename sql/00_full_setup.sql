@@ -17,9 +17,8 @@ USE peerly;
 CREATE TABLE IF NOT EXISTS Department (
     dept_id INT          PRIMARY KEY,
     name    VARCHAR(100) NOT NULL,
-    code    VARCHAR(10)  NOT NULL UNIQUE,
-    faculty VARCHAR(100) NOT NULL
-    -- Resolves 3NF transitive dependency: student_id → dept → faculty
+    code    VARCHAR(10)  NOT NULL UNIQUE
+    -- dept_id FK enforces 3NF: dept details live in Department, not Student
 );
 
 CREATE TABLE IF NOT EXISTS Subject (
@@ -156,11 +155,11 @@ CREATE TABLE IF NOT EXISTS ReputationLog (
 -- SECTION 2: SEED DATA (mirrors mockDb.ts exactly)
 -- ============================================================
 
-INSERT IGNORE INTO Department (dept_id, name, code, faculty) VALUES
-    (10, 'Computer Science',       'CS', 'Faculty of Engineering'),
-    (20, 'Information Technology', 'IT', 'Faculty of Engineering'),
-    (30, 'Electrical Engineering', 'EE', 'Faculty of Engineering'),
-    (40, 'Mechanical Engineering', 'ME', 'Faculty of Engineering');
+INSERT IGNORE INTO Department (dept_id, name, code) VALUES
+    (10, 'Computer Science',       'CS'),
+    (20, 'Information Technology', 'IT'),
+    (30, 'Electrical Engineering', 'EE'),
+    (40, 'Mechanical Engineering', 'ME');
 
 INSERT IGNORE INTO Subject (subject_id, name, category, difficulty_level) VALUES
     (101, 'Calculus',          'Math',    'Medium'),
@@ -189,15 +188,15 @@ INSERT IGNORE INTO Student (student_id, name, email, phone, year, dept_id, reput
     (8, 'Hannah Müller',  'hannah@mail.com',  '+888999000', 4, 30, 4.30, 'password123');
 
 INSERT IGNORE INTO Availability (avail_id, student_id, day_of_week, start_time, end_time, is_recurring) VALUES
-    (1, 1, 'Monday',    '10:00:00', '12:00:00', TRUE),
-    (2, 1, 'Wednesday', '14:00:00', '16:00:00', TRUE),
-    (3, 2, 'Tuesday',   '11:00:00', '13:00:00', TRUE),
-    (4, 4, 'Thursday',  '09:00:00', '11:00:00', TRUE),
-    (5, 4, 'Friday',    '15:00:00', '17:00:00', TRUE),
-    (6, 6, 'Monday',    '16:00:00', '18:00:00', TRUE),
-    (7, 6, 'Wednesday', '10:00:00', '12:00:00', TRUE),
-    (8, 7, 'Tuesday',   '14:00:00', '16:00:00', TRUE),
-    (9, 8, 'Friday',    '11:00:00', '13:00:00', TRUE);
+    (1, 1, 'Mon', '10:00:00', '12:00:00', TRUE),
+    (2, 1, 'Wed', '14:00:00', '16:00:00', TRUE),
+    (3, 2, 'Tue', '11:00:00', '13:00:00', TRUE),
+    (4, 4, 'Thu', '09:00:00', '11:00:00', TRUE),
+    (5, 4, 'Fri', '15:00:00', '17:00:00', TRUE),
+    (6, 6, 'Mon', '16:00:00', '18:00:00', TRUE),
+    (7, 6, 'Wed', '10:00:00', '12:00:00', TRUE),
+    (8, 7, 'Tue', '14:00:00', '16:00:00', TRUE),
+    (9, 8, 'Fri', '11:00:00', '13:00:00', TRUE);
 
 INSERT IGNORE INTO TeachingOffer (offer_id, student_id, subject_id, rate_type, hourly_rate, max_students) VALUES
     (1, 1, 101, 'Free', 0.00,  5),
@@ -240,11 +239,11 @@ INSERT IGNORE INTO Rating (rating_id, session_id, rater_id, ratee_id, score, com
 INSERT IGNORE INTO SessionNote (note_id, session_id, tutor_id, student_id, note_text) VALUES
     (1, 1, 1, 3, 'Charlie understood linear algebraic projections quickly.');
 
-INSERT IGNORE INTO StudentBadge (sb_id, student_id, badge_id, awarded_by_trigger) VALUES
-    (1, 1, 2, FALSE),
-    (2, 4, 2, FALSE),
-    (3, 4, 3, FALSE),
-    (4, 6, 2, FALSE);
+INSERT IGNORE INTO StudentBadge (sb_id, student_id, badge_id, awarded_at, awarded_by_trigger) VALUES
+    (1, 1, 2, '2026-04-10', FALSE),
+    (2, 4, 2, '2026-03-22', FALSE),
+    (3, 4, 3, '2026-04-01', FALSE),
+    (4, 6, 2, '2026-04-18', FALSE);
 
 INSERT IGNORE INTO ReputationLog (log_id, student_id, old_score, new_score, reason) VALUES
     (1, 1, 4.30, 4.50, 'Rating received: 5 stars from Charlie'),
