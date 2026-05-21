@@ -1,5 +1,4 @@
 import { createServer } from 'node:http'
-import { Readable } from 'node:stream'
 import { existsSync, createReadStream, statSync } from 'node:fs'
 import { join, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -31,32 +30,39 @@ createServer(async (req, res) => {
     return
   }
 
-  // Everything else goes to the SSR handler
-  const url = `http://${req.headers.host || 'localhost'}${req.url}`
+  process.stdout.write(req.method + ' ' + req.url + '\n')
+
+  // Buffer the request body
+  const chunks = []
+  for await (const chunk of req) chunks.push(chunk)
+  const bodyBuf = Buffer.concat(chunks)
+
   const headers = {}
   for (const [k, v] of Object.entries(req.headers)) {
     if (v !== undefined) headers[k] = Array.isArray(v) ? v.join(', ') : String(v)
   }
-  let body = undefined
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    body = Readable.toWeb(req)
-  }
+
   try {
-    const webReq = new Request(url, {
+    const webReq = new Request(`http://${req.headers.host || 'localhost'}${req.url}`, {
       method: req.method,
       headers,
-      ...(body ? { body, duplex: 'half' } : {}),
+      ...(bodyBuf.length > 0 ? { body: bodyBuf } : {}),
     })
+
     const webRes = await handler.fetch(webReq)
+    process.stdout.write('  -> ' + webRes.status + '\n')
+
     res.statusCode = webRes.status
+    // Handle Set-Cookie specially (multiple values)
+    const setCookies = webRes.headers.getSetCookie ? webRes.headers.getSetCookie() : []
     for (const [k, v] of webRes.headers.entries()) {
+      if (k.toLowerCase() === 'set-cookie') continue
       res.setHeader(k, v)
     }
-    if (webRes.body) {
-      Readable.fromWeb(webRes.body).pipe(res)
-    } else {
-      res.end()
-    }
+    if (setCookies.length) res.setHeader('Set-Cookie', setCookies)
+
+    const body = await webRes.arrayBuffer()
+    res.end(Buffer.from(body))
   } catch (err) {
     process.stdout.write('[request error] ' + err.stack + '\n')
     if (!res.headersSent) {
