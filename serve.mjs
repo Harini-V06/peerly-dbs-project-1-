@@ -1,5 +1,5 @@
 import { createServer } from 'node:http'
-import { existsSync, createReadStream, statSync } from 'node:fs'
+import { existsSync, createReadStream, statSync, readdirSync } from 'node:fs'
 import { join, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -9,6 +9,14 @@ process.on('unhandledRejection', (r) => process.stdout.write('[unhandledRejectio
 const { default: handler } = await import('./dist/server/server.js')
 const clientDir = join(fileURLToPath(new URL('.', import.meta.url)), 'dist', 'client')
 const port = Number(process.env.PORT) || 3000
+
+// Log available assets at startup so we can verify Docker build output
+try {
+  const assets = readdirSync(join(clientDir, 'assets'))
+  process.stdout.write('[assets] ' + assets.join(', ') + '\n')
+} catch (e) {
+  process.stdout.write('[assets] ERROR reading assets dir: ' + e.message + '\n')
+}
 
 const MIME = {
   '.js': 'application/javascript', '.mjs': 'application/javascript',
@@ -26,6 +34,7 @@ createServer(async (req, res) => {
     const mime = MIME[extname(filePath)] || 'application/octet-stream'
     res.setHeader('Content-Type', mime)
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+    process.stdout.write('static ' + pathname + ' (' + mime + ')\n')
     createReadStream(filePath).pipe(res)
     return
   }

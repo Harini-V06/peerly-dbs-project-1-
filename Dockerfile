@@ -1,5 +1,5 @@
 FROM node:22-alpine
-# cache-bust: 2
+# cache-bust: 3
 WORKDIR /app
 COPY package.json ./
 RUN npm install --include=dev --legacy-peer-deps
