@@ -1,3 +1,14 @@
-// Build config is now in app.config.ts (TanStack Start / Vinxi).
 import { defineConfig } from 'vite'
-export default defineConfig({})
+import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import tailwindcss from '@tailwindcss/vite'
+import tsConfigPaths from 'vite-tsconfig-paths'
+
+export default defineConfig({
+  plugins: [
+    tailwindcss(),
+    tsConfigPaths(),
+    tanstackStart({
+      tsr: { routeFileIgnorePrefix: '-' },
+    }),
+  ],
+})

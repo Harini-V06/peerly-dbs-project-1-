@@ -4,11 +4,10 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "vinxi dev",
-    "build": "vinxi build",
-    "build:dev": "vinxi build --preset node-server",
-    "start": "node .output/server/index.mjs",
-    "preview": "node .output/server/index.mjs",
+    "dev": "vite",
+    "build": "vite build",
+    "start": "node dist/server/index.js",
+    "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
@@ -53,7 +52,6 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.575.0",
     "mysql2": "^3.14.1",
-    "vinxi": "^0.5.11",
     "react": "^19.2.0",
     "react-day-picker": "^9.14.0",
     "react-dom": "^19.2.0",
