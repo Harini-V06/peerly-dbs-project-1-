@@ -1,15 +1,50 @@
-process.stdout.write('serve.mjs: start\n')
+import { createServer } from 'node:http'
+import { Readable } from 'node:stream'
 
-const app = await import('./dist/server/server.js')
+process.on('uncaughtException', (err) => process.stderr.write('[uncaughtException] ' + err.stack + '\n'))
+process.on('unhandledRejection', (r) => process.stderr.write('[unhandledRejection] ' + r + '\n'))
 
-process.stdout.write('app loaded\n')
-process.stdout.write('app.default type: ' + typeof app.default + '\n')
-process.stdout.write('app keys: ' + Object.keys(app).join(', ') + '\n')
-if (app.default && typeof app.default === 'object') {
-  process.stdout.write('app.default keys: ' + Object.keys(app.default).join(', ') + '\n')
-}
-if (typeof app.default === 'function') {
-  process.stdout.write('app.default is a function\n')
-}
+const { default: handler } = await import('./dist/server/server.js')
+const port = Number(process.env.PORT) || 3000
 
-process.exit(0)
+createServer(async (req, res) => {
+  const url = `http://${req.headers.host || 'localhost'}${req.url}`
+  const headers = {}
+  for (const [k, v] of Object.entries(req.headers)) {
+    if (v !== undefined) headers[k] = Array.isArray(v) ? v.join(', ') : String(v)
+  }
+
+  let body = undefined
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    body = Readable.toWeb(req)
+  }
+
+  try {
+    const webReq = new Request(url, {
+      method: req.method,
+      headers,
+      ...(body ? { body, duplex: 'half' } : {}),
+    })
+
+    const webRes = await handler.fetch(webReq)
+
+    res.statusCode = webRes.status
+    for (const [k, v] of webRes.headers.entries()) {
+      res.setHeader(k, v)
+    }
+
+    if (webRes.body) {
+      Readable.fromWeb(webRes.body).pipe(res)
+    } else {
+      res.end()
+    }
+  } catch (err) {
+    process.stderr.write('[request error] ' + err.stack + '\n')
+    if (!res.headersSent) {
+      res.statusCode = 500
+      res.end('Error: ' + err.message)
+    }
+  }
+}).listen(port, '0.0.0.0', () => {
+  process.stdout.write('Listening on port ' + port + '\n')
+})
