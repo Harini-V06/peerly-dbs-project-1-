@@ -3,6 +3,6 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install --include=dev --legacy-peer-deps
 COPY . .
-RUN npm run build && ls -la dist/server/
+RUN npm run build
 EXPOSE 3000
-CMD ["node", "dist/server/index.js"]
+CMD ["node", "dist/server/server.js"]
