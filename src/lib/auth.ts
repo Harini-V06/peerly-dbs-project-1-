@@ -4,7 +4,7 @@ import { getPool } from './db'
 import type { RowDataPacket } from 'mysql2'
 
 export const loginFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => {
+  .inputValidator((data: unknown) => {
     const d = data as { email: string; password: string }
     return { email: d.email, password: d.password }
   })

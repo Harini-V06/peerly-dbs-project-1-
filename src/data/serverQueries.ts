@@ -51,7 +51,7 @@ export const getActiveTutorsFn = createServerFn({ method: 'GET' })
   })
 
 export const getMatchFeedFn = createServerFn({ method: 'GET' })
-  .validator((data: unknown) => data as { studentId: number })
+  .inputValidator((data: unknown) => data as { studentId: number })
   .handler(async ({ data }): Promise<ActiveTutor[]> => {
     const [rows] = await getPool().execute<RowDataPacket[]>(`
       SELECT o.offer_id, s.student_id, s.name AS student_name,
@@ -79,7 +79,7 @@ export const getMatchFeedFn = createServerFn({ method: 'GET' })
   })
 
 export const getStudentByIdFn = createServerFn({ method: 'GET' })
-  .validator((data: unknown) => data as { id: number })
+  .inputValidator((data: unknown) => data as { id: number })
   .handler(async ({ data }) => {
     const [rows] = await getPool().execute<RowDataPacket[]>(`
       SELECT s.student_id, s.name, s.email, s.year,
@@ -92,7 +92,7 @@ export const getStudentByIdFn = createServerFn({ method: 'GET' })
   })
 
 export const getTeachingSubjectsFn = createServerFn({ method: 'GET' })
-  .validator((data: unknown) => data as { studentId: number })
+  .inputValidator((data: unknown) => data as { studentId: number })
   .handler(async ({ data }) => {
     const [rows] = await getPool().execute<RowDataPacket[]>(`
       SELECT sub.subject_id, sub.name, sub.category, sub.difficulty_level AS difficulty_level
@@ -104,7 +104,7 @@ export const getTeachingSubjectsFn = createServerFn({ method: 'GET' })
   })
 
 export const getLearningSubjectsFn = createServerFn({ method: 'GET' })
-  .validator((data: unknown) => data as { studentId: number })
+  .inputValidator((data: unknown) => data as { studentId: number })
   .handler(async ({ data }) => {
     const [rows] = await getPool().execute<RowDataPacket[]>(`
       SELECT sub.subject_id, sub.name, sub.category, sub.difficulty_level AS difficulty_level
@@ -116,7 +116,7 @@ export const getLearningSubjectsFn = createServerFn({ method: 'GET' })
   })
 
 export const getRatingsForFn = createServerFn({ method: 'GET' })
-  .validator((data: unknown) => data as { studentId: number })
+  .inputValidator((data: unknown) => data as { studentId: number })
   .handler(async ({ data }) => {
     const [rows] = await getPool().execute<RowDataPacket[]>(`
       SELECT r.rating_id, r.session_id, r.rater_id, r.ratee_id, r.score, r.comment,
@@ -139,7 +139,7 @@ export const getRatingsForFn = createServerFn({ method: 'GET' })
   })
 
 export const getStudentReputationFn = createServerFn({ method: 'GET' })
-  .validator((data: unknown) => data as { studentId: number })
+  .inputValidator((data: unknown) => data as { studentId: number })
   .handler(async ({ data }): Promise<StudentRep> => {
     // Student info
     const [sRows] = await getPool().execute<RowDataPacket[]>(`
@@ -196,7 +196,7 @@ export const getStudentReputationFn = createServerFn({ method: 'GET' })
   })
 
 export const getSessionHistoryFn = createServerFn({ method: 'GET' })
-  .validator((data: unknown) => data as { studentId: number })
+  .inputValidator((data: unknown) => data as { studentId: number })
   .handler(async ({ data }): Promise<SessionHistoryRow[]> => {
     const [rows] = await getPool().execute<RowDataPacket[]>(`
       SELECT sess.session_id, sess.datetime, sess.duration, sess.mode, sess.status,
@@ -247,7 +247,7 @@ export const getSessionHistoryFn = createServerFn({ method: 'GET' })
   })
 
 export const getOfferByIdFn = createServerFn({ method: 'GET' })
-  .validator((data: unknown) => data as { offerId: number })
+  .inputValidator((data: unknown) => data as { offerId: number })
   .handler(async ({ data }) => {
     const [rows] = await getPool().execute<RowDataPacket[]>(`
       SELECT offer_id, student_id, subject_id, rate_type AS rate, hourly_rate, max_students
@@ -257,7 +257,7 @@ export const getOfferByIdFn = createServerFn({ method: 'GET' })
   })
 
 export const getAvailabilityForFn = createServerFn({ method: 'GET' })
-  .validator((data: unknown) => data as { studentId: number })
+  .inputValidator((data: unknown) => data as { studentId: number })
   .handler(async ({ data }) => {
     const [rows] = await getPool().execute<RowDataPacket[]>(`
       SELECT avail_id, student_id, day_of_week, start_time, end_time
@@ -267,7 +267,7 @@ export const getAvailabilityForFn = createServerFn({ method: 'GET' })
   })
 
 export const getSubjectByIdFn = createServerFn({ method: 'GET' })
-  .validator((data: unknown) => data as { subjectId: number })
+  .inputValidator((data: unknown) => data as { subjectId: number })
   .handler(async ({ data }) => {
     const [rows] = await getPool().execute<RowDataPacket[]>(`
       SELECT subject_id, name, category, difficulty_level FROM Subject WHERE subject_id = ?
@@ -276,7 +276,7 @@ export const getSubjectByIdFn = createServerFn({ method: 'GET' })
   })
 
 export const bookSessionFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => data as {
+  .inputValidator((data: unknown) => data as {
     offer_id: number; learner_id: number; datetime: string; duration: number; mode: string
   })
   .handler(async ({ data }) => {
@@ -312,7 +312,7 @@ export const bookSessionFn = createServerFn({ method: 'POST' })
   })
 
 export const completeSessionFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => data as { sessionId: number })
+  .inputValidator((data: unknown) => data as { sessionId: number })
   .handler(async ({ data }) => {
     await getPool().execute(
       "UPDATE Session SET status = 'Completed' WHERE session_id = ?",
@@ -322,7 +322,7 @@ export const completeSessionFn = createServerFn({ method: 'POST' })
   })
 
 export const leaveRatingFn = createServerFn({ method: 'POST' })
-  .validator((data: unknown) => data as {
+  .inputValidator((data: unknown) => data as {
     session_id: number; rater_id: number; ratee_id: number; score: number; comment: string
   })
   .handler(async ({ data }) => {
