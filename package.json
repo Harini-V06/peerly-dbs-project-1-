@@ -4,9 +4,9 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "vinxi dev",
-    "build": "vinxi build",
-    "build:dev": "vinxi build --preset node-server",
+    "dev": "./node_modules/.bin/vinxi dev",
+    "build": "./node_modules/.bin/vinxi build",
+    "build:dev": "./node_modules/.bin/vinxi build --preset node-server",
     "start": "node .output/server/index.mjs",
     "preview": "node .output/server/index.mjs",
     "lint": "eslint .",
