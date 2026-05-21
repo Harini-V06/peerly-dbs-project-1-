@@ -4,11 +4,10 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "vinxi dev",
-    "build": "vinxi build",
-    "build:dev": "vinxi build --preset node-server",
-    "start": "node .output/server/index.mjs",
-    "preview": "node .output/server/index.mjs",
+    "dev": "vite",
+    "build": "vite build",
+    "start": "node dist/server/server.js",
+    "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
