@@ -10,7 +10,7 @@ const { default: handler } = await import('./dist/server/server.js')
 const clientDir = join(fileURLToPath(new URL('.', import.meta.url)), 'dist', 'client')
 const port = Number(process.env.PORT) || 3000
 
-// Log available assets at startup so we can verify Docker build output
+// Log available assets at startup to verify Docker build output
 try {
   const assets = readdirSync(join(clientDir, 'assets'))
   process.stdout.write('[assets] ' + assets.join(', ') + '\n')
@@ -26,9 +26,33 @@ const MIME = {
   '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf',
 }
 
+// Tiny script injected into every HTML response to capture JS errors server-side
+const ERROR_CATCHER = `<script>
+window.addEventListener('error',function(e){
+  fetch('/__jserr',{method:'POST',body:JSON.stringify({msg:e.message,src:e.filename,line:e.lineno,stack:e.error&&e.error.stack})});
+});
+window.addEventListener('unhandledrejection',function(e){
+  fetch('/__jserr',{method:'POST',body:JSON.stringify({msg:String(e.reason),stack:e.reason&&e.reason.stack})});
+});
+</script>`
+
 createServer(async (req, res) => {
-  // Serve static files from dist/client/ directly
   const pathname = req.url.split('?')[0]
+
+  // Client-side error reporting endpoint
+  if (req.method === 'POST' && pathname === '/__jserr') {
+    const chunks = []
+    for await (const chunk of req) chunks.push(chunk)
+    try {
+      const data = JSON.parse(Buffer.concat(chunks).toString())
+      process.stdout.write('[CLIENT JS ERROR] ' + JSON.stringify(data) + '\n')
+    } catch {}
+    res.statusCode = 204
+    res.end()
+    return
+  }
+
+  // Serve static files from dist/client/ directly
   const filePath = join(clientDir, pathname)
   if (existsSync(filePath) && statSync(filePath).isFile()) {
     const mime = MIME[extname(filePath)] || 'application/octet-stream'
@@ -62,7 +86,6 @@ createServer(async (req, res) => {
     process.stdout.write('  -> ' + webRes.status + '\n')
 
     res.statusCode = webRes.status
-    // Handle Set-Cookie specially (multiple values)
     const setCookies = webRes.headers.getSetCookie ? webRes.headers.getSetCookie() : []
     for (const [k, v] of webRes.headers.entries()) {
       if (k.toLowerCase() === 'set-cookie') continue
@@ -70,8 +93,17 @@ createServer(async (req, res) => {
     }
     if (setCookies.length) res.setHeader('Set-Cookie', setCookies)
 
-    const body = await webRes.arrayBuffer()
-    res.end(Buffer.from(body))
+    const bodyBuf2 = Buffer.from(await webRes.arrayBuffer())
+    const ct = (res.getHeader('content-type') || '').toString()
+
+    // Inject error catcher script into HTML responses
+    if (ct.includes('text/html')) {
+      const html = bodyBuf2.toString('utf8')
+      const patched = html.replace('<head>', '<head>' + ERROR_CATCHER)
+      res.end(Buffer.from(patched, 'utf8'))
+    } else {
+      res.end(bodyBuf2)
+    }
   } catch (err) {
     process.stdout.write('[request error] ' + err.stack + '\n')
     if (!res.headersSent) {
