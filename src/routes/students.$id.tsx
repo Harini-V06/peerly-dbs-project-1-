@@ -61,8 +61,8 @@ function StudentProfile() {
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <span className="flex items-center gap-1.5">
-                  <StarRating value={rep.avg_rating} />
-                  <span className="text-sm">{rep.avg_rating.toFixed(2)} ({rep.total_ratings} reviews)</span>
+                  <StarRating value={Number(rep.avg_rating)} />
+                  <span className="text-sm">{Number(rep.avg_rating).toFixed(2)} ({rep.total_ratings} reviews)</span>
                 </span>
                 <span className="text-sm">·</span>
                 <span className="text-sm">Rep score <strong>{rep.reputation_score}</strong></span>

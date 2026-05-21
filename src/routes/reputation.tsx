@@ -23,8 +23,8 @@ function ReputationPage() {
   const { rep, reviews } = Route.useLoaderData()
 
   const stats = [
-    { label: "Reputation score", value: rep.reputation_score.toFixed(2), tone: "pink" },
-    { label: "Avg rating", value: rep.avg_rating.toFixed(1), tone: "mint" },
+    { label: "Reputation score", value: Number(rep.reputation_score).toFixed(2), tone: "pink" },
+    { label: "Avg rating", value: Number(rep.avg_rating).toFixed(1), tone: "mint" },
     { label: "Sessions completed", value: rep.completed_sessions, tone: "blue" },
     { label: `Rank in ${rep.student.department}`, value: `#${rep.dept_rank} / ${rep.dept_total}`, tone: "peach" },
   ] as const;
