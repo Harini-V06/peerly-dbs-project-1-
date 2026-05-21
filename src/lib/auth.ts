@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { getCookie, setCookie, deleteCookie } from 'vinxi/http'
+import { getCookie, setCookie, deleteCookie } from '@tanstack/react-start/server'
 import { getPool } from './db'
 import type { RowDataPacket } from 'mysql2'
 
