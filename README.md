@@ -118,5 +118,14 @@ psql -U <user> -d <database> -f sql/schema.sql
 ---
 
 ## 📸 Screenshots
+<img width="1751" height="655" alt="dbms_back0" src="https://github.com/user-attachments/assets/f0809042-234e-40aa-87de-58da85cf4089" />
+<img width="1758" height="697" alt="dbms_back1" src="https://github.com/user-attachments/assets/148623e6-b5af-49d5-aa09-902c8bc0315b" />
+<img width="1743" height="691" alt="dbms_back2" src="https://github.com/user-attachments/assets/8552db7f-d47e-48cb-82b7-e72cb4664803" />
+
+<img width="953" height="473" alt="dbms_front0" src="https://github.com/user-attachments/assets/2bd9e03e-ba08-478a-a9b1-036545a389d3" />
+<img width="955" height="441" alt="dbms_front1" src="https://github.com/user-attachments/assets/0868eff0-3cf7-475f-aca6-d2c20b6ad717" />
+<img width="954" height="438" alt="dbms_front2" src="https://github.com/user-attachments/assets/d84baeff-f4e8-418c-8cfc-67abed0a7b3d" />
+<img width="952" height="447" alt="dbms_front3" src="https://github.com/user-attachments/assets/983c6f26-664c-4ac7-b846-db24668c0f0c" />
+
 
 
