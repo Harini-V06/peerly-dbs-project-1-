@@ -1,39 +1,44 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import {
-  getStudentById, getStudentReputation, getRatingsFor,
-  getTeachingSubjects, getLearningSubjects, getActiveTutors,
-} from "@/data/queries";
+  getStudentByIdFn, getStudentReputationFn, getRatingsForFn,
+  getTeachingSubjectsFn, getLearningSubjectsFn, getActiveTutorsFn,
+} from "@/data/serverQueries";
 import { SubjectTag } from "@/components/SubjectTag";
 import { BadgeChip } from "@/components/BadgeChip";
 import { StarRating } from "@/components/StarRating";
 import { PillLink } from "@/components/PillButton";
 
 export const Route = createFileRoute("/students/$id")({
-  head: ({ params }) => {
-    const s = getStudentById(Number(params.id));
+  head: ({ loaderData }) => {
     return {
       meta: [
-        { title: s ? `${s.name} — peerly.` : "Student profile" },
-        { name: "description", content: s ? `${s.name}'s peer-tutoring profile and reputation.` : "Student profile" },
+        { title: loaderData?.rep?.student?.name ? `${loaderData.rep.student.name} — peerly.` : "Student profile" },
+        { name: "description", content: loaderData?.rep?.student?.name ? `${loaderData.rep.student.name}'s peer-tutoring profile and reputation.` : "Student profile" },
       ],
     };
   },
-  loader: ({ params }) => {
+  beforeLoad: ({ context }) => {
+    if (!(context as any).currentUserId) throw redirect({ to: '/login' })
+  },
+  loader: async ({ params }) => {
     const id = Number(params.id);
-    const student = getStudentById(id);
+    const student = await getStudentByIdFn({ data: { id } });
     if (!student) throw notFound();
-    return { id };
+    const [rep, teaches, needs, reviews, allTutors] = await Promise.all([
+      getStudentReputationFn({ data: { studentId: id } }),
+      getTeachingSubjectsFn({ data: { studentId: id } }),
+      getLearningSubjectsFn({ data: { studentId: id } }),
+      getRatingsForFn({ data: { studentId: id } }),
+      getActiveTutorsFn(),
+    ]);
+    const myOffers = allTutors.filter((t) => t.student_id === id);
+    return { id, rep, teaches, needs, reviews, myOffers };
   },
   component: StudentProfile,
 });
 
 function StudentProfile() {
-  const { id } = Route.useLoaderData();
-  const rep = getStudentReputation(id);
-  const teaches = getTeachingSubjects(id);
-  const needs = getLearningSubjects(id);
-  const reviews = getRatingsFor(id);
-  const myOffers = getActiveTutors().filter((t) => t.student_id === id);
+  const { rep, teaches, needs, reviews, myOffers } = Route.useLoaderData();
 
   const initials = rep.student.name.split(" ").map((s) => s[0]).slice(0, 2).join("");
 
