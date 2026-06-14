@@ -6,7 +6,24 @@
 `alice@mail.com` / `password123` (demo account)
 
 ---
+---
 
+## 👩‍💻 My Contributions
+
+This project was built collaboratively. My specific contributions were:
+
+**1. ER Framework Design**
+- Identified all core entities and their attributes from the requirements
+- Defined attribute types, primary keys, and constraints for each entity
+- Modelled all relationships including cardinalities (one-to-many, many-to-many) and participation constraints
+- Translated the ER diagram into a normalized relational schema
+
+**2. Front-End to Back-End Connectivity**
+- Integrated the React frontend with the PostgreSQL backend hosted on Railway
+- Configured environment variables and connection strings for Railway deployment
+- Ensured API calls correctly map to database operations (CRUD for sessions, offers, requests, ratings)
+
+---
 ## 📌 Project Overview
 
 Peerly is an academic database systems project built at **BITS Pilani, Dubai Campus** as part of the Database Management Systems course. It demonstrates real-world application of relational database design, query optimization, and backend integration.
@@ -62,25 +79,6 @@ The schema was designed from scratch with careful attention to normalization, re
 - Reputation score is a computed weighted average (rating value × recency weight × session count factor), recalculated after every new rating
 - A `BEFORE INSERT` trigger on the `Rating` table fires badge assignment when a tutor's completed session count crosses 10
 - The `ReputationLog` ensures full transparency and auditability of every score change
-
----
-
-## 👩‍💻 My Contributions
-
-This project was built collaboratively. My specific contributions were:
-
-**1. ER Framework Design**
-- Identified all core entities and their attributes from the requirements
-- Defined attribute types, primary keys, and constraints for each entity
-- Modelled all relationships including cardinalities (one-to-many, many-to-many) and participation constraints
-- Translated the ER diagram into a normalized relational schema
-
-**2. Front-End to Back-End Connectivity**
-- Integrated the React frontend with the PostgreSQL backend hosted on Railway
-- Configured environment variables and connection strings for Railway deployment
-- Ensured API calls correctly map to database operations (CRUD for sessions, offers, requests, ratings)
-
----
 
 ## 🚀 Getting Started (Local Setup)
 
