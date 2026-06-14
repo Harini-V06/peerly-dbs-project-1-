@@ -6,7 +6,6 @@
 `alice@mail.com` / `password123` (demo account)
 
 ---
----
 
 ## 👩‍💻 My Contributions
 
