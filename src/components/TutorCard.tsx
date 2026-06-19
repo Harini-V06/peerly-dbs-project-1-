@@ -54,9 +54,9 @@ export function TutorCard({ tutor, index = 0 }: { tutor: ActiveTutor; index?: nu
 
       <div className="mt-auto flex items-center justify-between border-t border-foreground/15 pt-3">
         <div className="flex items-center gap-2 text-sm">
-          <StarRating value={tutor.avg_rating} />
+          <StarRating value={Number(tutor.avg_rating)} />
           <span className="text-muted-foreground">
-            {tutor.avg_rating.toFixed(1)} · {tutor.total_ratings} reviews
+            {Number(tutor.avg_rating).toFixed(1)} · {tutor.total_ratings} reviews
           </span>
         </div>
         <PillLink

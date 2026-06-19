@@ -1,21 +1,30 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { CURRENT_USER_ID } from "@/data/mockDb";
-import { getStudentReputation, getRatingsFor } from "@/data/queries";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getStudentReputationFn, getRatingsForFn } from "@/data/serverQueries";
 import { StarRating } from "@/components/StarRating";
 import { BadgeChip } from "@/components/BadgeChip";
 
 export const Route = createFileRoute("/reputation")({
   head: () => ({ meta: [{ title: "My reputation — peerly." }] }),
+  beforeLoad: ({ context }) => {
+    if (!(context as any).currentUserId) throw redirect({ to: '/login' })
+  },
+  loader: async ({ context }) => {
+    const studentId = (context as any).currentUserId as number
+    const [rep, reviews] = await Promise.all([
+      getStudentReputationFn({ data: { studentId } }),
+      getRatingsForFn({ data: { studentId } }),
+    ])
+    return { rep, reviews }
+  },
   component: ReputationPage,
 });
 
 function ReputationPage() {
-  const rep = getStudentReputation(CURRENT_USER_ID);
-  const reviews = getRatingsFor(CURRENT_USER_ID);
+  const { rep, reviews } = Route.useLoaderData()
 
   const stats = [
-    { label: "Reputation score", value: rep.reputation_score.toFixed(2), tone: "pink" },
-    { label: "Avg rating", value: rep.avg_rating.toFixed(1), tone: "mint" },
+    { label: "Reputation score", value: Number(rep.reputation_score).toFixed(2), tone: "pink" },
+    { label: "Avg rating", value: Number(rep.avg_rating).toFixed(1), tone: "mint" },
     { label: "Sessions completed", value: rep.completed_sessions, tone: "blue" },
     { label: `Rank in ${rep.student.department}`, value: `#${rep.dept_rank} / ${rep.dept_total}`, tone: "peach" },
   ] as const;

@@ -1,5 +1,5 @@
 export function StarRating({ value, size = 14 }: { value: number; size?: number }) {
-  const full = Math.round(value);
+  const full = Math.round(Number(value));
   return (
     <span className="inline-flex items-center gap-0.5" aria-label={`${value} out of 5`}>
       {[1, 2, 3, 4, 5].map((i) => (

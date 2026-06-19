@@ -11,6 +11,7 @@ import {
 import appCss from "../styles.css?url";
 import { Nav } from "@/components/Nav";
 import { Marquee } from "@/components/Marquee";
+import { getSessionFn } from "@/lib/auth";
 
 function NotFoundComponent() {
   return (
@@ -57,7 +58,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient; currentUserId: number | null }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -75,6 +76,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
   }),
+  beforeLoad: async () => {
+    const currentUserId = await getSessionFn()
+    return { currentUserId }
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -115,8 +120,7 @@ function RootComponent() {
         <footer className="mt-16">
           <Marquee items={marqueeItems} />
           <div className="mx-auto max-w-6xl px-6 py-8 text-xs text-muted-foreground flex flex-wrap items-center justify-between gap-3">
-            <span>© 2026 peerly. — built for DBMS coursework</span>
-            <span>Mock user: Alice Chen (student_id 1)</span>
+            <span>© 2026 peerly.</span>
           </div>
         </footer>
       </div>

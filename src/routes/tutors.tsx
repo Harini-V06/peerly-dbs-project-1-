@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { getActiveTutors } from "@/data/queries";
+import { getActiveTutorsFn } from "@/data/serverQueries";
 import { TutorCard } from "@/components/TutorCard";
 
 export const Route = createFileRoute("/tutors")({
@@ -10,11 +10,15 @@ export const Route = createFileRoute("/tutors")({
       { name: "description", content: "Search every active teaching offer by subject, rate, and rating." },
     ],
   }),
+  beforeLoad: ({ context }) => {
+    if (!(context as any).currentUserId) throw redirect({ to: '/login' })
+  },
+  loader: async () => await getActiveTutorsFn(),
   component: TutorsPage,
 });
 
 function TutorsPage() {
-  const all = getActiveTutors();
+  const all = Route.useLoaderData()
   const [q, setQ] = useState("");
   const [rate, setRate] = useState<"all" | "Free" | "Paid">("all");
 
